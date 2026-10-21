@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @map("password_hash") @db.VarChar(255)
+  role          String    @default("creator") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  
+  channels      Channel[]
+  contents      Content[]
+
+  @@map("tbl_users")
+}
+
+model Channel {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  platform    String    @db.VarChar(100)
+  handleName  String    @map("handle_name") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contents    Content[]
+
+  @@map("tbl_channels")
+}
+
+model Content {
+  id             Int          @id @default(autoincrement())
+  userId         Int          @map("user_id")
+  channelId      Int?         @map("channel_id")
+  title          String       @db.VarChar(255)
+  description    String?      @db.Text
+  scriptDraft    String?      @map("script_draft") @db.Text
+  formatType     String       @map("format_type") @db.VarChar(100)
+  priority       String       @default("medium") @db.VarChar(50)
+  status         String       @default("idea") @db.VarChar(50)
+  scheduledDate  DateTime?    @map("scheduled_date") @db.Date
+  publishedDate  DateTime?    @map("published_date") @db.Date
+  publishedUrl   String?      @map("published_url") @db.VarChar(508)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel        Channel?     @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  checklists     Checklist[]
+  metrics        Metric[]
+
+  @@map("tbl_contents")
+}
+
+model Checklist {
+  id          Int      @id @default(autoincrement())
+  contentId   Int      @map("content_id")
+  taskName    String   @map("task_name") @db.VarChar(255)
+  isCompleted Boolean  @default(false) @map("is_completed")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("tbl_checklists")
+}
+
+model Metric {
+  id            Int      @id @default(autoincrement())
+  contentId     Int      @map("content_id")
+  recordedAt    DateTime @map("recorded_at") @db.Date
+  viewsCount    Int      @default(0) @map("views_count")
+  likesCount    Int      @default(0) @map("likes_count")
+  commentsCount Int      @default(0) @map("comments_count")
+  sharesCount   Int      @default(0) @map("shares_count")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  content       Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("tbl_metrics")
+}
