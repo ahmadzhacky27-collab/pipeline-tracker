@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 SEEDER DIMULAI...'); // Pastikan baris ini ada di paling atas
+    console.log('SEEDER DIMULAI...'); // Pastikan baris ini ada di paling atas
 
     // Hapus data lama (urutan penting agar tidak kena foreign key constraint)
     await prisma.metric.deleteMany();
@@ -14,23 +14,23 @@ async function main() {
     await prisma.user.deleteMany();
 
     // Buat Akun Dummy
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const hashedPassword = await bcrypt.hash('12345678', 10);
     const dummyUser = await prisma.user.create({
         data: {
-            name: 'Ahmad Zhacky',
-            email: 'zhacky@example.com',
+            name: 'PPKDJP',
+            email: 'ppkdjp@gmail.com',
             passwordHash: hashedPassword,
             role: 'creator',
         },
     });
-    console.log(`👤 User dummy dibuat: ${dummyUser.email}`);
+    console.log(`User dummy dibuat: ${dummyUser.email}`);
 
     // Buat 2 Channel Dummy
     const channel1 = await prisma.channel.create({
         data: {
             userId: dummyUser.id,
             platform: 'YouTube',
-            handleName: '@ZhackyTech',
+            handleName: '@ppkdjp',
         },
     });
 
@@ -38,10 +38,10 @@ async function main() {
         data: {
             userId: dummyUser.id,
             platform: 'TikTok',
-            handleName: '@zhacky_gaming',
+            handleName: '@ppkdjp',
         },
     });
-    console.log('📺 2 Channel dummy berhasil dibuat.');
+    console.log('Channel dummy berhasil dibuat.');
 
     // Buat 3 Contoh Konten
     await prisma.content.create({
@@ -83,13 +83,13 @@ async function main() {
         },
     });
 
-    console.log('🎬 3 Contoh konten berhasil dibuat.');
-    console.log('✅ Seeding selesai!');
+    console.log('Contoh konten berhasil dibuat.');
+    console.log('Seeding selesai!');
 }
 
 main()
     .catch((e) => {
-        console.error('❌ Terjadi kesalahan saat seeding:', e);
+        console.error('Terjadi kesalahan saat seeding:', e);
         process.exit(1);
     })
     .finally(async () => {
