@@ -15,79 +15,100 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String    @db.VarChar(255)
-  email         String    @unique @db.VarChar(255)
-  passwordHash  String    @map("password_hash") @db.VarChar(255)
-  role          String    @default("creator") @db.VarChar(50)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  
-  channels      Channel[]
-  contents      Content[]
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   @default("creator") // creator, editor, admin
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  channels       Channel[]
+  contents       Content[]       @relation("CreatorContents")
+  assignedEdits  Content[]       @relation("EditorAssigned")
+  reviews        ContentReview[]
 
   @@map("tbl_users")
 }
 
 model Channel {
-  id          Int       @id @default(autoincrement())
-  userId      Int       @map("user_id")
-  platform    String    @db.VarChar(100)
-  handleName  String    @map("handle_name") @db.VarChar(255)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  platform   String
+  handleName String   @map("handle_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contents    Content[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contents Content[]
 
   @@map("tbl_channels")
 }
 
 model Content {
-  id             Int          @id @default(autoincrement())
-  userId         Int          @map("user_id")
-  channelId      Int?         @map("channel_id")
-  title          String       @db.VarChar(255)
-  description    String?      @db.Text
-  scriptDraft    String?      @map("script_draft") @db.Text
-  formatType     String       @map("format_type") @db.VarChar(100)
-  priority       String       @default("medium") @db.VarChar(50)
-  status         String       @default("idea") @db.VarChar(50)
-  scheduledDate  DateTime?    @map("scheduled_date") @db.Date
-  publishedDate  DateTime?    @map("published_date") @db.Date
-  publishedUrl   String?      @map("published_url") @db.VarChar(508)
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  channelId   Int      @map("channel_id")
+  editorId    Int?     @map("editor_id")
+  title       String
+  description String?  @db.Text
+  formatType  String   @map("format_type") // short, long, livestream, dll
+  status      String   @default("idea")    // idea, scripting, recording, editing, in_review, ready, published, revision
+  priority    String   @default("medium")  // low, medium, high
+  scheduledAt DateTime? @map("scheduled_at")
+  publishedUrl String? @map("published_url")
+  reviewUrl   String?  @map("review_url")
+  reviewNote  String?  @map("review_note") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel        Channel?     @relation(fields: [channelId], references: [id], onDelete: SetNull)
-  checklists     Checklist[]
-  metrics        Metric[]
+  creator    User            @relation("CreatorContents", fields: [userId], references: [id], onDelete: Cascade)
+  editor     User?           @relation("EditorAssigned", fields: [editorId], references: [id], onDelete: SetNull)
+  channel    Channel         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  checklists Checklist[]
+  metrics    Metric[]
+  reviews    ContentReview[]
 
   @@map("tbl_contents")
 }
 
 model Checklist {
-  id          Int      @id @default(autoincrement())
-  contentId   Int      @map("content_id")
-  taskName    String   @map("task_name") @db.VarChar(255)
-  isCompleted Boolean  @default(false) @map("is_completed")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  id        Int      @id @default(autoincrement())
+  contentId Int      @map("content_id")
+  task      String
+  isDone    Boolean  @default(false) @map("is_done")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   @@map("tbl_checklists")
 }
 
 model Metric {
-  id            Int      @id @default(autoincrement())
-  contentId     Int      @map("content_id")
-  recordedAt    DateTime @map("recorded_at") @db.Date
-  viewsCount    Int      @default(0) @map("views_count")
-  likesCount    Int      @default(0) @map("likes_count")
-  commentsCount Int      @default(0) @map("comments_count")
-  sharesCount   Int      @default(0) @map("shares_count")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  id           Int      @id @default(autoincrement())
+  contentId    Int      @map("content_id")
+  viewsCount   Int      @default(0) @map("views_count")
+  likesCount   Int      @default(0) @map("likes_count")
+  commentsCount Int     @default(0) @map("comments_count")
+  sharesCount  Int      @default(0) @map("shares_count")
+  recordedAt   DateTime @default(now()) @map("recorded_at")
 
-  content       Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   @@map("tbl_metrics")
+}
+
+model ContentReview {
+  id        Int      @id @default(autoincrement())
+  contentId Int      @map("content_id")
+  userId    Int      @map("user_id")
+  action    String   // submitted, approved, revision_requested
+  note      String?  @db.Text
+  reviewUrl String?  @map("review_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tbl_content_reviews")
 }

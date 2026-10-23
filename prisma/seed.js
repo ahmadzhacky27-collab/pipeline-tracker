@@ -1,95 +1,93 @@
 import { PrismaClient } from '../src/generated/prisma/index.js';
 import bcrypt from 'bcrypt';
 
+
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('SEEDER DIMULAI...'); // Pastikan baris ini ada di paling atas
+    console.log('--- Memulai Seeding Data ---');
 
-    // Hapus data lama (urutan penting agar tidak kena foreign key constraint)
-    await prisma.metric.deleteMany();
-    await prisma.checklist.deleteMany();
-    await prisma.content.deleteMany();
-    await prisma.channel.deleteMany();
-    await prisma.user.deleteMany();
+    // 1. Hash password default 'password123'
+    const salt = await bcrypt.genSalt(10);
+    const defaultPassword = await bcrypt.hash('password123', salt);
 
-    // Buat Akun Dummy
-    const hashedPassword = await bcrypt.hash('12345678', 10);
-    const dummyUser = await prisma.user.create({
-        data: {
-            name: 'PPKDJP',
-            email: 'ppkdjp@gmail.com',
-            passwordHash: hashedPassword,
+    // 2. Buat Akun Demo (Creator, Editor, Admin)
+    const creator = await prisma.user.upsert({
+        where: { email: 'creator@demo.id' },
+        update: {},
+        create: {
+            name: 'Demo Creator',
+            email: 'creator@demo.id',
+            passwordHash: defaultPassword,
             role: 'creator',
         },
     });
-    console.log(`User dummy dibuat: ${dummyUser.email}`);
 
-    // Buat 2 Channel Dummy
+    const editor = await prisma.user.upsert({
+        where: { email: 'editor@demo.id' },
+        update: {},
+        create: {
+            name: 'Demo Editor',
+            email: 'editor@demo.id',
+            passwordHash: defaultPassword,
+            role: 'editor',
+        },
+    });
+
+    const admin = await prisma.user.upsert({
+        where: { email: 'admin@demo.id' },
+        update: {},
+        create: {
+            name: 'Demo Admin',
+            email: 'admin@demo.id',
+            passwordHash: defaultPassword,
+            role: 'admin',
+        },
+    });
+
+    console.log('User demo berhasil dibuat:');
+    console.log('- creator@demo.id (Password: password123)');
+    console.log('- editor@demo.id (Password: password123)');
+    console.log('- admin@demo.id (Password: password123)');
+
+    // 3. Buat Channel Utama
     const channel1 = await prisma.channel.create({
         data: {
-            userId: dummyUser.id,
+            userId: creator.id,
             platform: 'YouTube',
-            handleName: '@ppkdjp',
+            handleName: '@DemoChannelYT',
         },
     });
 
-    const channel2 = await prisma.channel.create({
+    // 4. Buat Konten Awal
+    const content1 = await prisma.content.create({
         data: {
-            userId: dummyUser.id,
-            platform: 'TikTok',
-            handleName: '@ppkdjp',
-        },
-    });
-    console.log('Channel dummy berhasil dibuat.');
-
-    // Buat 3 Contoh Konten
-    await prisma.content.create({
-        data: {
-            userId: dummyUser.id,
+            userId: creator.id,
             channelId: channel1.id,
-            title: 'Review Setup PC Gaming Terbaru 2026',
-            description: 'Membahas spesifikasi PC custom rakitan dengan Ryzen 5 dan RX 6600.',
-            scriptDraft: 'Halo semuanya, selamat datang kembali di channel saya...',
-            formatType: 'Long-form Video',
+            editorId: editor.id,
+            title: 'Setup studio rumahan',
+            description: 'Panduan membangun studio rekaman dengan budget minim.',
+            formatType: 'long',
+            status: 'editing',
             priority: 'high',
-            status: 'published',
         },
     });
 
-    await prisma.content.create({
-        data: {
-            userId: dummyUser.id,
-            channelId: channel2.id,
-            title: 'Tips Setting OBS Studio Anti Lag',
-            description: 'Tutorial singkat cara setting bitrate untuk live streaming TikTok.',
-            scriptDraft: 'Mau live streaming tapi patah-patah? Begini caranya...',
-            formatType: 'Short/Reels',
-            priority: 'medium',
-            status: 'in_progress',
-        },
+    // 5. Buat Checklist Awal
+    await prisma.checklist.createMany({
+        data: [
+            { contentId: content1.id, task: 'Menulis naskah video', isDone: true },
+            { contentId: content1.id, task: 'Rekam pencahayaan & mic', isDone: true },
+            { contentId: content1.id, task: 'Editing warna & audio', isDone: false },
+        ],
     });
 
-    await prisma.content.create({
-        data: {
-            userId: dummyUser.id,
-            channelId: channel1.id,
-            title: 'Vlog Aktivitas Sehari-hari Backend Developer',
-            description: 'Mengintip keseharian membangun REST API menggunakan Node.js dan Express.',
-            scriptDraft: 'Jam 8 pagi mulai ngopi dan buka VS Code...',
-            formatType: 'Vlog',
-            priority: 'low',
-            status: 'idea',
-        },
-    });
-
-    console.log('Contoh konten berhasil dibuat.');
-    console.log('Seeding selesai!');
+    console.log('--- Seeding Selesai Diselesaikan ---');
 }
 
 main()
     .catch((e) => {
-        console.error('Terjadi kesalahan saat seeding:', e);
+        console.error('Error saat seeding:', e);
         process.exit(1);
     })
     .finally(async () => {

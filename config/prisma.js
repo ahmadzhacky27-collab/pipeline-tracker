@@ -3,3 +3,4 @@ import { PrismaClient } from '../src/generated/prisma/index.js'; // Sesuaikan pa
 
 const prisma = new PrismaClient();
 export default prisma;
+
