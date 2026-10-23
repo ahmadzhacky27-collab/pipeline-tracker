@@ -110,3 +110,41 @@ export const login = async (req, res) => {
         });
     }
 };
+
+// 3. Mendapatkan informasi user yang sedang login berdasarkan Token
+export const getMe = async (req, res) => {
+    try {
+        // req.user didapat dari middleware verifikasi token JWT
+        const userId = req.user.id;
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "User profile fetched successfully",
+            data: user
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: "Failed to fetch user profile",
+            error: error.message
+        });
+    }
+};
