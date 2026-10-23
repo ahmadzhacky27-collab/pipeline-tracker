@@ -5,13 +5,13 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('--- Memulai Seeding Data ---');
+    console.log('seeding start');
 
     // 1. Hash password default 'password123'
     const salt = await bcrypt.genSalt(10);
     const defaultPassword = await bcrypt.hash('password123', salt);
 
-    // 2. Buat Akun Demo (Creator, Editor, Admin)
+    // 2. USER
     const creator = await prisma.user.upsert({
         where: { email: 'creator@demo.id' },
         update: {},
@@ -46,11 +46,11 @@ async function main() {
     });
 
     console.log('User demo berhasil dibuat:');
-    console.log('- creator@demo.id (Password: password123)');
-    console.log('- editor@demo.id (Password: password123)');
-    console.log('- admin@demo.id (Password: password123)');
+    console.log('creator@demo.id (Password: password123)');
+    console.log('editor@demo.id (Password: password123)');
+    console.log('admin@demo.id (Password: password123)');
 
-    // 3. Buat Channel Utama
+    // 3. CHANNEL
     const channel1 = await prisma.channel.create({
         data: {
             userId: creator.id,
@@ -59,7 +59,7 @@ async function main() {
         },
     });
 
-    // 4. Buat Konten Awal
+    // 4. CONTENT
     const content1 = await prisma.content.create({
         data: {
             userId: creator.id,
@@ -73,7 +73,7 @@ async function main() {
         },
     });
 
-    // 5. Buat Checklist Awal
+    // 5. CHECKLIST
     await prisma.checklist.createMany({
         data: [
             { contentId: content1.id, task: 'Menulis naskah video', isDone: true },
@@ -82,7 +82,7 @@ async function main() {
         ],
     });
 
-    console.log('--- Seeding Selesai Diselesaikan ---');
+    console.log('seeding end');
 }
 
 main()
