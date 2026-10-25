@@ -62,6 +62,7 @@ export const register = async (req, res) => {
 
 // 2. Login Pengguna
 export const login = async (req, res) => {
+    console.log("HIT /login endpoint! Body:", req.body);
     const { email, password } = req.body;
 
     try {
@@ -95,7 +96,7 @@ export const login = async (req, res) => {
             status: true,
             message: "Login successful",
             token,
-            data: { 
+            user: { 
                 id: user.id, 
                 name: user.name, 
                 email: user.email, 

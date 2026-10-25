@@ -52,6 +52,7 @@ model Content {
   editorId    Int?     @map("editor_id")
   title       String
   description String?  @db.Text
+  scriptDraft String?  @map("script_draft")
   formatType  String   @map("format_type") // short, long, livestream, dll
   status      String   @default("idea")    // idea, scripting, recording, editing, in_review, ready, published, revision
   priority    String   @default("medium")  // low, medium, high

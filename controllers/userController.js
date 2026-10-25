@@ -17,11 +17,8 @@ export const getUsers = async (req, res) => {
             }
         });
 
-        return res.status(200).json({
-            status: true,
-            message: "Users fetched successfully",
-            data: users
-        });
+        return res.status(200).json(users);
+
     } catch (error) {
         return res.status(500).json({
             status: false,
@@ -57,11 +54,8 @@ export const updateUserRole = async (req, res) => {
             }
         });
 
-        return res.status(200).json({
-            status: true,
-            message: "User role updated successfully",
-            data: updatedUser
-        });
+        return res.status(200).json(updatedUser);
+        
     } catch (error) {
         return res.status(500).json({
             status: false,

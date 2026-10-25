@@ -2,30 +2,31 @@ import prisma from '../config/prisma.js';
 
 // 1. Tambah Channel Baru
 export const createChannel = async (req, res) => {
-    const { userId, platform, handleName } = req.body;
-
-    if (!userId || !platform || !handleName) {
-        return res.status(400).json({
-            status: false,
-            message: "userId, platform, and handleName are required fields.",
-        });
-    }
-
     try {
+        const { platform, handle_name } = req.body;
+        const userId = req.user?.id;
+
+        if (!platform || !handle_name) {
+            return res.status(400).json({
+                status: false,
+                message: "platform and handle_name are required fields.",
+            });
+        }
+
         const newChannel = await prisma.channel.create({
             data: {
-                userId: Number(userId),
                 platform,
-                handleName
+                handleName: handle_name,
+                userId
             }
         });
 
         return res.status(201).json({
-            status: true,
-            message: "Channel created successfully",
-            data: newChannel,
+            ...newChannel,
+            handle_name: newChannel.handleName
         });
-    } catch (error) {
+
+    } catch (error) {        
         return res.status(500).json({
             status: false,
             message: "Failed to create channel",
@@ -35,21 +36,20 @@ export const createChannel = async (req, res) => {
 };
 
 // 2. Ambil Daftar Channel
-export const getChannels = async (req, res) => {
-    const { userId } = req.query;
-
+export const getChannels = async (req, res) => {    
     try {
         const channels = await prisma.channel.findMany({
-            where: userId ? { userId: Number(userId) } : undefined,
-            orderBy: { createdAt: 'desc' }
+            where: { userId: req.user.id},
+            orderBy: { createdAt: "desc" }
         });
 
-        return res.status(200).json({
-            status: true,
-            message: "Fetch channels success",
-            total: channels.length,
-            data: channels,
-        });
+        const formattedChannels = channels.map((channel) => ({
+            ...channel,
+            handle_name: channel.handleName
+        }));
+        
+        return res.status(200).json(formattedChannels);
+
     } catch (error) {
         return res.status(500).json({
             status: false,

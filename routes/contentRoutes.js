@@ -1,10 +1,11 @@
 import express from 'express';
-import { getContents, createContent } from '../controllers/contentController.js';
-// Impor middleware autentikasi jika ada (misal: verifyToken)
+import { getContents, createContent, getContentById } from '../controllers/contentController.js'
+import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/contents', getContents);
-router.post('/contents', createContent);
+router.get('/', verifyToken, getContents);
+router.post('/', verifyToken, createContent);
+router.get('/:id', verifyToken, getContentById); // 👈 Pastikan rute ini ada!
 
 export default router;
