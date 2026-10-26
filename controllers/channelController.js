@@ -35,11 +35,13 @@ export const createChannel = async (req, res) => {
     }
 };
 
-// 2. Ambil Daftar Channel
+// 2. Ambil Daftar Channel (Admin lihat semua, User biasa lihat miliknya sendiri)
 export const getChannels = async (req, res) => {    
     try {
+        const whereCondition = req.user.role === 'admin' ? {} : { userId: req.user.id };
+
         const channels = await prisma.channel.findMany({
-            where: { userId: req.user.id},
+            where: whereCondition,
             orderBy: { createdAt: "desc" }
         });
 

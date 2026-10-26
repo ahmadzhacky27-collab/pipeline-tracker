@@ -1,21 +1,31 @@
 import prisma from '../config/prisma.js';
 
-// 1. Mendapatkan semua konten (Dilengkapi Filter & Search)
+// 1. Mendapatkan semua konten (Backend menyesuaikan frontend sepenuhnya)
 export const getContents = async (req, res) => {
     try {
-        const { status, channelId, search } = req.query;
+        const { status, channel_id, format_type, search } = req.query;
 
         // Menyusun kondisi filter dinamis
         const whereClause = {};
 
+        // Filter berdasarkan Role (Admin lihat semua, User biasa lihat miliknya sendiri)
+        if (req.user.role !== 'admin') {
+            whereClause.userId = req.user.id;
+        }
+
         // Filter berdasarkan Status
-        if (status) {
+        if (status && status !== "all" && status !== "") {
             whereClause.status = status;
         }
 
-        // Filter berdasarkan Channel
-        if (channelId) {
-            whereClause.channelId = Number(channelId);
+        // Filter berdasarkan Channel ID (mengikuti frontend: channel_id)
+        if (channel_id && channel_id !== "" && channel_id !== "all") {
+            whereClause.channelId = Number(channel_id);
+        }
+
+        // Filter berdasarkan Format Type (mengikuti frontend: format_type)
+        if (format_type && format_type !== "" && format_type !== "all") {
+            whereClause.formatType = format_type;
         }
 
         // Filter / Search berdasarkan Judul
@@ -37,7 +47,15 @@ export const getContents = async (req, res) => {
             }
         });
 
-        return res.status(200).json(contents);
+        // 🔥 Mapping data: Format tanggal agar dibaca valid oleh frontend
+        const formattedContents = contents.map((content) => ({
+            ...content,
+            format_type: content.formatType,
+            // Jika scheduledAt ada, ubah ke string "YYYY-MM-DD", jika null/kosong kirim null
+            scheduled_date: content.scheduledAt ? new Date(content.scheduledAt).toISOString().split('T')[0] : null
+        }));
+
+        return res.status(200).json(formattedContents);
 
     } catch (error) {
         console.error("Error getContents:", error);
@@ -49,7 +67,7 @@ export const getContents = async (req, res) => {
     }
 };
 
-// Mendapatkan detail konten berdasarkan ID
+// 2. Mendapatkan detail konten berdasarkan ID
 export const getContentById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -65,7 +83,7 @@ export const getContentById = async (req, res) => {
         const content = await prisma.content.findUnique({
             where: { id: Number(id) },
             include: {
-                user: { select: { id: true, name: true, email: true } },
+                creator: { select: { id: true, name: true, email: true } }, // 👈 Diubah dari user ke creator
                 editor: { select: { id: true, name: true, email: true } },
                 channel: { select: { id: true, platform: true, handleName: true } }
             }
@@ -89,7 +107,7 @@ export const getContentById = async (req, res) => {
     }
 };
 
-// 2. Membuat konten baru
+// 3. Membuat konten baru
 export const createContent = async (req, res) => {
     try {
         const {
@@ -112,7 +130,6 @@ export const createContent = async (req, res) => {
             });
         }
 
-        // Simpan ke database Prisma dengan mapping dan sanitasi data yang aman
         const newContent = await prisma.content.create({
             data: {
                 title,
@@ -126,7 +143,7 @@ export const createContent = async (req, res) => {
                 userId
             },
             include: {
-                user: { select: { id: true, name: true, email: true } },
+                creator: { select: { id: true, name: true, email: true } },
                 editor: { select: { id: true, name: true, email: true } },
                 channel: { select: { id: true, platform: true, handleName: true } }
             }
