@@ -13,7 +13,7 @@ app.use(express.json());
 // Daftarkan Routes Auth & Channels[cite: 11]
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/', channelRoutes);
-app.use('/api/v1/', contentRoutes);
+app.use('/api/v1/channels', channelRoutes);
+app.use('/api/v1/contents', contentRoutes);
 
 export default app;

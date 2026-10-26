@@ -4,7 +4,7 @@ import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/channels', verifyToken, createChannel);
-router.get('/channels', verifyToken, getChannels);
+router.post('/', verifyToken, createChannel);
+router.get('/', verifyToken, getChannels);
 
 export default router;

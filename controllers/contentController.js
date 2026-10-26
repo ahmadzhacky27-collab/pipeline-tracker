@@ -28,7 +28,7 @@ export const getContents = async (req, res) => {
         const contents = await prisma.content.findMany({
             where: whereClause,
             include: {
-                user: { select: { id: true, name: true, email: true } },
+                creator: { select: { id: true, name: true, email: true } },
                 editor: { select: { id: true, name: true, email: true } },
                 channel: { select: { id: true, platform: true, handleName: true } }
             },
