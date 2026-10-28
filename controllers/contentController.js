@@ -8,9 +8,13 @@ export const getContents = async (req, res) => {
         // Menyusun kondisi filter dinamis
         const whereClause = {};
 
-        // Filter berdasarkan Role (Admin lihat semua, User biasa lihat miliknya sendiri)
+        // 🔥 Perbaikan Logika Role:
+        // Jika bukan admin, user bisa melihat konten jika dia sebagai creator (userId) ATAU sebagai editor (editorId)
         if (req.user.role !== 'admin') {
-            whereClause.userId = req.user.id;
+            whereClause.OR = [
+                { userId: req.user.id },
+                { editorId: req.user.id }
+            ];
         }
 
         // Filter berdasarkan Status
@@ -47,11 +51,9 @@ export const getContents = async (req, res) => {
             }
         });
 
-        // Mapping data format tanggal
         const formattedContents = contents.map((content) => ({
             ...content,
             format_type: content.formatType,
-            // Jika scheduledAt ada, ubah ke string "YYYY-MM-DD", jika null/kosong kirim null
             scheduled_date: content.scheduledAt ? new Date(content.scheduledAt).toISOString().split('T')[0] : null
         }));
 
