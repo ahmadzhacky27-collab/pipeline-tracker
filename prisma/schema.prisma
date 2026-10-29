@@ -23,10 +23,10 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  channels       Channel[]
-  contents       Content[]       @relation("CreatorContents")
-  assignedEdits  Content[]       @relation("EditorAssigned")
-  reviews        ContentReview[]
+  channels         Channel[]
+  contents         Content[]       @relation("CreatorContents")
+  assignedEdits    Content[]       @relation("EditorAssigned")
+  reviews          ContentReview[]
 
   @@map("tbl_users")
 }
@@ -39,34 +39,33 @@ model Channel {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "tbl_channels_user_fkey")
   contents Content[]
 
   @@map("tbl_channels")
 }
 
 model Content {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id")
-  channelId   Int      @map("channel_id")
-  editorId    Int?     @map("editor_id")
-  title       String
-  description String?  @db.Text
-  scriptDraft String?  @map("script_draft")
-  formatType  String   @map("format_type") // short, long, livestream, dll
-  status      String   @default("idea")    // idea, scripting, recording, editing, in_review, ready, published, revision
-  priority    String   @default("medium")  // low, medium, high
-  scheduledAt DateTime? @map("scheduled_at")
-  publishedUrl String? @map("published_url")
-  reviewUrl   String?  @map("review_url")
-  reviewNote  String?  @map("review_note") @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  channelId    Int       @map("channel_id")
+  editorId     Int?      @map("editor_id")
+  title        String
+  description  String?   @db.Text
+  scriptDraft  String?   @map("script_draft")
+  formatType   String    @map("format_type") // short, long, livestream, dll
+  status       String    @default("idea")    // idea, scripting, recording, editing, in_review, ready, published, revision
+  priority     String    @default("medium")  // low, medium, high
+  scheduledAt  DateTime? @map("scheduled_at")
+  publishedUrl String?   @map("published_url")
+  reviewUrl    String?   @map("review_url")
+  reviewNote   String?   @map("review_note") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  creator    User            @relation("CreatorContents", fields: [userId], references: [id], onDelete: Cascade)
-  editor     User?           @relation("EditorAssigned", fields: [editorId], references: [id], onDelete: SetNull)
-  channel    Channel         @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  creator  User          @relation("CreatorContents", fields: [userId], references: [id], onDelete: Cascade, map: "tbl_contents_creator_fkey")
+  editor   User?         @relation("EditorAssigned", fields: [editorId], references: [id], onDelete: SetNull, map: "tbl_contents_editor_fkey")
+  channel  Channel       @relation(fields: [channelId], references: [id], onDelete: Cascade, map: "tbl_contents_channel_fkey")
   checklists Checklist[]
   metrics    Metric[]
   reviews    ContentReview[]
@@ -81,21 +80,21 @@ model Checklist {
   isDone    Boolean  @default(false) @map("is_done")
   createdAt DateTime @default(now()) @map("created_at")
 
-  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade, map: "tbl_checklists_content_fkey")
 
   @@map("tbl_checklists")
 }
 
 model Metric {
-  id           Int      @id @default(autoincrement())
-  contentId    Int      @map("content_id")
-  viewsCount   Int      @default(0) @map("views_count")
-  likesCount   Int      @default(0) @map("likes_count")
-  commentsCount Int     @default(0) @map("comments_count")
-  sharesCount  Int      @default(0) @map("shares_count")
-  recordedAt   DateTime @default(now()) @map("recorded_at")
+  id            Int      @id @default(autoincrement())
+  contentId     Int      @map("content_id")
+  viewsCount    Int      @default(0) @map("views_count")
+  likesCount    Int      @default(0) @map("likes_count")
+  commentsCount Int      @default(0) @map("comments_count")
+  sharesCount   Int      @default(0) @map("shares_count")
+  recordedAt    DateTime @default(now()) @map("recorded_at")
 
-  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade, map: "tbl_metrics_content_fkey")
 
   @@map("tbl_metrics")
 }
@@ -109,8 +108,8 @@ model ContentReview {
   reviewUrl String?  @map("review_url")
   createdAt DateTime @default(now()) @map("created_at")
 
-  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade, map: "tbl_content_reviews_content_fkey")
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "tbl_content_reviews_user_fkey")
 
   @@map("tbl_content_reviews")
 }
